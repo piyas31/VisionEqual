@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>VisionEqual</title>
     <style>
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: #003366; 
-        color: #FFDD44;      
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #003366;
+        color: #ffdd44;
         text-align: center;
         padding: 40px;
         margin: 0;
-    }
-    h1 {
+      }
+      h1 {
         font-size: 3rem;
         margin-bottom: 30px;
-    }
-    form {
-        background: #222222; 
+      }
+      form {
+        background: #222222;
         padding: 30px;
         border-radius: 12px;
         display: inline-block;
         max-width: 400px;
         width: 90%;
-    }
-    input[type="file"] {
+      }
+      input[type="file"] {
         font-size: 1.2rem;
         padding: 10px;
         border-radius: 6px;
-        border: 2px solid #FFDD44;
+        border: 2px solid #ffdd44;
         background: #003366;
-        color: #FFDD44;
+        color: #ffdd44;
         cursor: pointer;
         margin-bottom: 20px;
-    }
-    input[type="file"]::file-selector-button {
-        background: #FFDD44;
+      }
+      input[type="file"]::file-selector-button {
+        background: #ffdd44;
         color: #003366;
         border: none;
         border-radius: 6px;
         padding: 8px 15px;
         cursor: pointer;
         font-weight: bold;
-    }
-    button {
-        background-color: #FFDD44; 
-        color: #003366;           
+      }
+      button {
+        background-color: #ffdd44;
+        color: #003366;
         border: none;
         padding: 12px 40px;
         font-size: 1.2rem;
@@ -53,60 +53,160 @@
         border-radius: 50px;
         cursor: pointer;
         transition: background-color 0.3s ease;
-    }
-    button:hover {
+        margin-top: 15px;
+      }
+      button:hover {
         background-color: #e6c844;
-    }
-    #result {
+      }
+      #result {
         margin-top: 40px;
-    }
-    #result img {
-        max-width: 90vw;
+        color: #ffdd44;
+      }
+      #result img {
+        max-width: 200px;
         border-radius: 15px;
-    
-    }
-</style>
-
-
-</head>
-<body>
+        border: 2px solid #ffdd44;
+      }
+      .image-container {
+        display: inline-block;
+        margin: 10px 15px;
+      }
+      .image-caption {
+        margin-top: 10px;
+        font-weight: bold;
+      }
+      #contrast-control {
+        margin: 25px auto 15px auto;
+        max-width: 400px;
+        color: #ffdd44;
+      }
+      #contrast-label {
+        margin-bottom: 6px;
+        font-weight: bold;
+      }
+      #contrast-slider {
+        width: 100%;
+      }
+      .download-btn {
+        display: block;
+        margin-top: 10px;
+        background-color: #003366;
+        color: #ffdd44;
+        border: 2px solid #ffdd44;
+        padding: 8px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+      }
+      .download-btn:hover {
+        background-color: #e6c844;
+        color: #003366;
+      }
+    </style>
+  </head>
+  <body>
     <h1>Color Assist Tool for Colorblind Students</h1>
-    <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
-        <input type="file" name="image" accept="image/*" required />
-        <br/>
-        <button type="submit">Upload & Process</button>
+    <form
+      id="uploadForm"
+      method="POST"
+      action="/upload"
+      enctype="multipart/form-data"
+    >
+      <input type="file" name="image" accept="image/*" required />
+      <br />
+      <button type="submit">Upload & Process</button>
     </form>
+
+    <div id="contrast-control" style="display: none">
+      <div id="contrast-label">Adjust Contrast</div>
+      <input
+        type="range"
+        id="contrast-slider"
+        min="0.5"
+        max="3"
+        step="0.05"
+        value="1"
+      />
+    </div>
 
     <div id="result"></div>
 
     <script>
-        const form = document.getElementById('uploadForm');
-        const resultDiv = document.getElementById('result');
+      const form = document.getElementById("uploadForm");
+      const resultDiv = document.getElementById("result");
+      const contrastControl = document.getElementById("contrast-control");
+      const contrastSlider = document.getElementById("contrast-slider");
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            resultDiv.innerHTML = 'Processing...';
+      let originalImg = null;
+      let daltonizedImg = null;
+      let grayscaleImg = null;
+      let enhancedImg = null;
 
-            const formData = new FormData(form);
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        resultDiv.innerHTML = "Processing...";
+        contrastControl.style.display = "none";
 
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+        const formData = new FormData(form);
 
-                if (!response.ok) {
-                    throw new Error('Upload failed');
-                }
+        try {
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-                const blob = await response.blob();
-                const imgUrl = URL.createObjectURL(blob);
+          if (!response.ok) throw new Error("Upload failed");
+          const data = await response.json();
 
-                resultDiv.innerHTML = `<img src="${imgUrl}" alt="Processed Image" />`;
-            } catch (err) {
-                resultDiv.innerHTML = `<p style="color:yellow;">Error: ${err.message}</p>`;
-            }
-        });
+          originalImg = data.original;
+          grayscaleImg = data.grayscale;
+          daltonizedImg = data.daltonized;
+          enhancedImg = data.enhanced;
+
+          contrastSlider.value = 1;
+          contrastControl.style.display = "block";
+
+          renderImages(1);
+        } catch (err) {
+          resultDiv.innerHTML = `<p style="color:yellow;">Error: ${err.message}</p>`;
+        }
+      });
+
+      contrastSlider.addEventListener("input", () => {
+        const alpha = parseFloat(contrastSlider.value);
+        renderImages(alpha);
+      });
+
+      async function renderImages(alpha) {
+        // We'll request the server to enhance contrast with given alpha
+        // For simplicity, just update images here by re-uploading with alpha (optional improvement)
+        // For now, we can simulate by adjusting CSS filter for demo:
+
+        // Show images side by side
+        resultDiv.innerHTML = `
+                <div class="image-container">
+                    <img src="${originalImg}" alt="Original Image"/>
+                    <div class="image-caption">Original</div>
+                    <a class="download-btn" href="${originalImg}" download>Download Original</a>
+                </div>
+                <div class="image-container">
+                    <img src="${grayscaleImg}" alt="Grayscale Image" style="filter: grayscale(100%)"/>
+                    <div class="image-caption">Grayscale</div>
+                    <a class="download-btn" href="${grayscaleImg}" download>Download Grayscale</a>
+                </div>
+                <div class="image-container">
+                    <img src="${daltonizedImg}" alt="Daltonized Image"/>
+                    <div class="image-caption">Daltonized (Red-Green Simulation)</div>
+                    <a class="download-btn" href="${daltonizedImg}" download>Download Daltonized</a>
+                </div>
+                <div class="image-container">
+                    <img src="${enhancedImg}" alt="Enhanced Image" style="filter: contrast(${alpha})"/>
+                    <div class="image-caption">Enhanced (Contrast Adjusted)</div>
+                    <a class="download-btn" href="${enhancedImg}" download>Download Enhanced</a>
+                </div>
+            `;
+      }
     </script>
-</body>
+  </body>
 </html>
