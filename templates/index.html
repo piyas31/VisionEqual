@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Color Assist Tool</title>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #003366; 
+        color: #FFDD44;      
+        text-align: center;
+        padding: 40px;
+        margin: 0;
+    }
+    h1 {
+        font-size: 3rem;
+        margin-bottom: 30px;
+    }
+    form {
+        background: #222222; 
+        padding: 30px;
+        border-radius: 12px;
+        display: inline-block;
+        max-width: 400px;
+        width: 90%;
+    }
+    input[type="file"] {
+        font-size: 1.2rem;
+        padding: 10px;
+        border-radius: 6px;
+        border: 2px solid #FFDD44;
+        background: #003366;
+        color: #FFDD44;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    input[type="file"]::file-selector-button {
+        background: #FFDD44;
+        color: #003366;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 15px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    button {
+        background-color: #FFDD44; 
+        color: #003366;           
+        border: none;
+        padding: 12px 40px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #e6c844;
+    }
+    #result {
+        margin-top: 40px;
+    }
+    #result img {
+        max-width: 90vw;
+        border-radius: 15px;
+    
+    }
+</style>
+
+
+</head>
+<body>
+    <h1>Color Assist Tool for Colorblind Students</h1>
+    <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required />
+        <br/>
+        <button type="submit">Upload & Process</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            resultDiv.innerHTML = 'Processing...';
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                const blob = await response.blob();
+                const imgUrl = URL.createObjectURL(blob);
+
+                resultDiv.innerHTML = `<img src="${imgUrl}" alt="Processed Image" />`;
+            } catch (err) {
+                resultDiv.innerHTML = `<p style="color:yellow;">Error: ${err.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
